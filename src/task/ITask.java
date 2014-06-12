@@ -1,7 +1,10 @@
 package task;
 
-import java.util.List;
+import java.util.LinkedList;
 
-public interface ITask extends Runnable  {
-	public void execute(List<Object> param);
+public interface ITask<E> {
+	public Integer get_op_code();
+	public LinkedList<Object> get_params();
+	public E get_result();
+	public void set_result(E result);
 }

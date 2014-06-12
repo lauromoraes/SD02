@@ -4,32 +4,34 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import resource.Resource;
+import pipe.IPipe;
 
-public class Acceptor implements IAcceptor {
+public class Acceptor extends Thread implements IAcceptor {
 	
 	protected ServerSocket peer_acceptor;
-	protected Resource<Socket> connections;
+	protected IPipe<Socket> hosts_endpoints_pipe;
 	protected boolean is_accepting;
 	
 	public Acceptor() {}
 	
-	public Acceptor(ServerSocket peer_acceptor, Resource<Socket> connections) {
-		// Recebe um ServerSocket e o define como Handle Transport Endpoint
+	public Acceptor(ServerSocket peer_acceptor, IPipe<Socket> hosts_endpoints_pipe) {
+		/* Define a passive mode socket end point factory */
 		this.peer_acceptor = peer_acceptor;
 		
-		// Recebe um Resource de Sockets onde ira adicionar as conexoes que chegaram
-		this.connections = connections;
+		/* Define a Pipe to store temporary end point data on buffer */
+		this.hosts_endpoints_pipe = hosts_endpoints_pipe;
 		
+		/* Set state of Acceptor to accepting new requests */
 		this.is_accepting = true;
 	}
 
 	@Override
 	public void accept() {
-		// TODO Auto-generated method stub
 		try {
-			Socket s = this.peer_acceptor.accept();
-			this.connections.put(s);
+			/* Accept one new request and create new socket end point */
+			Socket s = peer_acceptor.accept();
+			/* Put created socket end point on buffer */
+			hosts_endpoints_pipe.write_buffer(s);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -37,10 +39,16 @@ public class Acceptor implements IAcceptor {
 
 	@Override
 	public void handle_event() {
-		// TODO Auto-generated method stub
+		/* While Pipe is defined as accepting, continues to listening and factoring */
 		while(is_accepting) {
 			this.accept();
 		}
 	}
+	
+	@Override
+	public void run() {
+		this.handle_event();
+	}
+	
 
 }
